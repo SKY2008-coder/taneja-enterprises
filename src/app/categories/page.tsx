@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { StorefrontHeader } from "@/components/storefront";
+import { ArrowUpRight } from "lucide-react";
+import { StorefrontFooter, StorefrontHeader } from "@/components/storefront";
 import { getActiveCategories } from "@/lib/supabase/storefront";
 
 export default async function CategoriesPage() {
   const categories = await getActiveCategories();
-  return <><StorefrontHeader /><main className="mx-auto max-w-7xl px-4 py-8"><p className="text-sm text-slate-500">Browse</p><h1 className="text-3xl font-black">Categories</h1>{categories.length ? <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{categories.map((category) => <Link href={`/category/${category.slug}`} key={category.id} className="rounded-2xl border border-slate-200 bg-white p-6 hover:border-slate-400"><h2 className="font-black">{category.name}</h2>{category.description ? <p className="mt-2 text-sm text-slate-500">{category.description}</p> : null}</Link>)}</div> : <p className="mt-6 rounded-2xl bg-slate-50 p-8 text-sm text-slate-500">No active categories are available.</p>}</main></>;
+  return <><StorefrontHeader /><main className="page-wrap"><div className="catalogue-heading"><div><p className="editorial-kicker">Index / 08</p><h1 className="display-title mt-5">All the ways<br />to care.</h1></div><p className="catalogue-count">{categories.length} categories</p></div>{categories.length ? <div className="category-editorial-grid">{categories.map((category, index) => <Link href={`/category/${category.slug}`} key={category.id} className="category-tile min-h-[250px]"><span className="category-index">{String(index + 1).padStart(2, "0")}</span><div><h2 className="text-[2rem] font-medium leading-none tracking-tight text-[var(--plum)]">{category.name}</h2>{category.description ? <p className="mt-4 max-w-xs text-sm leading-6 text-[var(--muted)]">{category.description}</p> : null}</div><span className="category-arrow"><ArrowUpRight size={22} /></span></Link>)}</div> : <div className="empty-state mt-10">No active categories are available.</div>}</main><StorefrontFooter /></>;
 }
