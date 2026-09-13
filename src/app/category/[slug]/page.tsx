@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { ProductGrid, StorefrontFooter, StorefrontHeader } from "@/components/storefront";
 import { getActiveCategory, getPublishedProducts } from "@/lib/supabase/storefront";
 
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) { const category = await getActiveCategory((await params).slug); return { title: category ? `${category.name} | Taneja Enterprises` : "Category unavailable", description: category?.description ?? `Browse ${category?.name ?? "professional beauty"} products from Taneja Enterprises.` }; }
+
 export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
   const category = await getActiveCategory((await params).slug);
   if (!category) notFound();

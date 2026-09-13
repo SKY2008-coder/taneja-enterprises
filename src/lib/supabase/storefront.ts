@@ -7,7 +7,10 @@ export async function getPublishedProducts(params?: { query?: string; category?:
   const pageSize = Math.min(48, Math.max(1, Number(params?.pageSize ?? 24)));
   let query = supabase.from("products").select("*, product_images(image_url, position, id, is_primary)", { count: "exact" }).eq("is_published", true);
   const search = params?.query?.trim();
-  if (search) query = query.or(`name.ilike.%${search}%,brand.ilike.%${search}%,sku.ilike.%${search}%,category.ilike.%${search}%,description.ilike.%${search}%`);
+  if (search) {
+    const escapedSearch = search.replace(/[%,.()\\]/g, (character) => `\\${character}`);
+    query = query.or(`name.ilike.%${escapedSearch}%,brand.ilike.%${escapedSearch}%,sku.ilike.%${escapedSearch}%,category.ilike.%${escapedSearch}%,description.ilike.%${escapedSearch}%`);
+  }
   if (params?.category) query = query.eq("category", params.category);
   if (params?.brand) query = query.eq("brand", params.brand);
   if (params?.subcategory) query = query.eq("subcategory", params.subcategory);
@@ -89,7 +92,7 @@ export async function getCart() {
     ...item,
     product: Array.isArray(item.product) ? item.product[0] ?? null : item.product,
   }));
-  const subtotal = items.reduce((sum, item) => sum + Number(item.product?.selling_price ?? 0) * Number(item.quantity), 0);
+  const subtotal = items.reduce((sum, item) => sum + (item.product?.is_published ? Number(item.product.selling_price ?? 0) * Number(item.quantity) : 0), 0);
   return { items, subtotal, discount: 0, total: subtotal, couponCode: cart.coupon_code };
 }
 
@@ -133,6 +136,22 @@ export async function getCheckoutSettings() {
   const supabase = await createServerSupabaseClient();
   const { data } = await supabase.from("storefront_settings").select("delivery_charge").eq("id", true).maybeSingle();
   return { deliveryCharge: Number(data?.delivery_charge ?? 0) };
+}
+
+export async function getPublishedProductSlugs() {
+  const supabase = await createServerSupabaseClient();
+  const slugs: string[] = [];
+  const pageSize = 1000;
+  let page = 0;
+  while (true) {
+    const { data, error } = await supabase.from("products").select("slug").eq("is_published", true).not("slug", "is", null).range(page * pageSize, (page + 1) * pageSize - 1);
+    if (error) throw new Error(error.message);
+    const pageSlugs = (data ?? []).map((product) => product.slug).filter((slug): slug is string => Boolean(slug));
+    slugs.push(...pageSlugs);
+    if (pageSlugs.length < pageSize) break;
+    page += 1;
+  }
+  return slugs;
 }
 
 export type PublicProductImage = ProductImage;

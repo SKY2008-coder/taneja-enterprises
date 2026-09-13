@@ -2,6 +2,8 @@ import { Search as SearchIcon } from "lucide-react";
 import { ProductGrid, StorefrontFooter, StorefrontHeader } from "@/components/storefront";
 import { getPublishedProducts } from "@/lib/supabase/storefront";
 
+export const metadata = { title: "Search Catalogue | Taneja Enterprises", description: "Search the live Taneja Enterprises wholesale beauty catalogue." };
+
 export default async function SearchPage({ searchParams }: { searchParams?: Promise<{ q?: string }> }) {
   const params = (await searchParams) ?? {};
   const data = params.q ? await getPublishedProducts({ query: params.q }) : { products: [], count: 0 };

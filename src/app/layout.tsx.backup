@@ -1,16 +1,5 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Inter } from "next/font/google";
 import "./globals.css";
-
-const displayFont = Playfair_Display({
-  subsets: ["latin"],
-  variable: "--font-display",
-});
-
-const bodyFont = Inter({
-  subsets: ["latin"],
-  variable: "--font-body",
-});
 
 export const metadata: Metadata = {
   title: "Taneja Enterprises | Wholesale Catalogue",
@@ -18,11 +7,11 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`h-full antialiased ${displayFont.variable} ${bodyFont.variable}`}
+      className="h-full antialiased"
     >
       <body className="site-shell">{children}</body>
     </html>

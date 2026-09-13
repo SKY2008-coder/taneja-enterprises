@@ -6,5 +6,101 @@ import { getCart } from "@/lib/supabase/storefront";
 
 export default async function CartPage() {
   const cart = await getCart();
-  return <><StorefrontHeader /><main className="page-wrap"><div className="catalogue-heading"><div><p className="editorial-kicker">Basket / 10</p><h1 className="commerce-title">Your<br />selection.</h1></div>{cart.items.length ? <form action={clearCartAction}><button className="text-action">Clear cart <Trash2 className="inline" size={14} /></button></form> : null}</div>{cart.items.length ? <div className="commerce-layout"><div>{cart.items.map((item) => <article key={item.id} className="commerce-item"><div className="commerce-thumb">{item.product?.product_images?.[0]?.image_url ? <img src={item.product.product_images[0].image_url} alt={item.product.name} /> : <span className="product-image-placeholder">No image</span>}</div><div><Link href={`/product/${item.product?.slug}`}><h2>{item.product?.name}</h2></Link><p>{item.product?.brand || "Taneja Enterprises"}</p><div className="commerce-item-controls"><form action={updateCartItemAction} className="flex items-center gap-2"><input type="hidden" name="item_id" value={item.id} /><input type="number" name="quantity" min={item.product?.minimum_order_quantity ?? 1} max={item.product?.stock_quantity ?? 0} defaultValue={item.quantity} aria-label={`Quantity for ${item.product?.name}`} /><button className="text-action">Update</button></form><form action={removeCartItemAction}><input type="hidden" name="item_id" value={item.id} /><button className="text-action">Remove</button></form></div></div><strong className="text-[var(--plum)]">₹{(Number(item.product?.selling_price ?? 0) * item.quantity).toLocaleString("en-IN")}</strong></article>)}</div><aside className="summary-panel"><h2>Order summary</h2><div className="summary-row"><span>Subtotal</span><strong>₹{cart.subtotal.toLocaleString("en-IN")}</strong></div><div className="summary-row"><span>Delivery</span><span>Calculated at checkout</span></div><div className="summary-row"><span>Coupon</span><span>Applied at checkout</span></div><div className="summary-total"><span>Total</span><span>₹{cart.total.toLocaleString("en-IN")}</span></div><Link href="/products" className="editorial-button editorial-button-light w-full">Continue shopping <ArrowLeft size={15} /></Link><Link href="/checkout" className="editorial-button mt-2 w-full">Proceed to checkout <ArrowRight size={15} /></Link></aside></div> : <div className="empty-state"><p className="font-[var(--font-display)] text-3xl text-[var(--plum)]">Your cart is empty.</p><Link href="/products" className="editorial-button mt-6">Browse the catalogue</Link></div>}</main><StorefrontFooter /></>;
+  const unavailableItems = cart.items.filter((item) => !item.product?.is_published);
+  const availableItems = cart.items.filter((item) => item.product?.is_published);
+  return (
+    <>
+      <StorefrontHeader />
+      <main className="page-wrap">
+        <div className="catalogue-heading">
+          <div>
+            <p className="editorial-kicker">Basket / 10</p>
+            <h1 className="commerce-title">Your<br />selection.</h1>
+          </div>
+          {cart.items.length ? (
+            <form action={clearCartAction}>
+              <button className="text-action">Clear cart <Trash2 className="inline" size={14} /></button>
+            </form>
+          ) : null}
+        </div>
+        {cart.items.length ? (
+          <div className="commerce-layout">
+            <div>
+              {unavailableItems.map((item) => (
+                <article key={item.id} className="commerce-item commerce-item-unavailable">
+                  <div className="commerce-thumb">
+                    <span className="product-image-placeholder">Unavailable</span>
+                  </div>
+                  <div>
+                    <h2>{item.product?.name ?? "Product unavailable"}</h2>
+                    <p>This saved item is no longer published.</p>
+                    <form action={removeCartItemAction} className="mt-4">
+                      <input type="hidden" name="item_id" value={item.id} />
+                      <button className="text-action">Remove item</button>
+                    </form>
+                  </div>
+                </article>
+              ))}
+              {availableItems.map((item) => (
+                <article key={item.id} className="commerce-item">
+                  <div className="commerce-thumb">
+                    {item.product?.product_images?.[0]?.image_url ? (
+                      <img src={item.product.product_images[0].image_url} alt={item.product.name} />
+                    ) : (
+                      <span className="product-image-placeholder">No image</span>
+                    )}
+                  </div>
+                  <div>
+                    <Link href={`/product/${item.product?.slug}`}>
+                      <h2>{item.product?.name}</h2>
+                    </Link>
+                    <p>{item.product?.brand || "Taneja Enterprises"}</p>
+                    <div className="commerce-item-controls">
+                      <form action={updateCartItemAction} className="flex items-center gap-2">
+                        <input type="hidden" name="item_id" value={item.id} />
+                        <label className="sr-only" htmlFor={`quantity-${item.id}`}>Quantity for {item.product?.name}</label>
+                        <input id={`quantity-${item.id}`} type="number" name="quantity" min={item.product?.minimum_order_quantity ?? 1} max={item.product?.stock_quantity ?? 0} defaultValue={item.quantity} />
+                        <button className="text-action">Update</button>
+                      </form>
+                      <form action={removeCartItemAction}>
+                        <input type="hidden" name="item_id" value={item.id} />
+                        <button className="text-action">Remove</button>
+                      </form>
+                    </div>
+                  </div>
+                  <strong className="text-[var(--plum)]">₹{(Number(item.product?.selling_price ?? 0) * item.quantity).toLocaleString("en-IN")}</strong>
+                </article>
+              ))}
+            </div>
+            <aside className="summary-panel">
+              <h2>Order summary</h2>
+              <div className="summary-row">
+                <span>Subtotal estimate</span>
+                <strong>₹{cart.subtotal.toLocaleString("en-IN")}</strong>
+              </div>
+              <div className="summary-row">
+                <span>Delivery, GST and coupon</span>
+                <span>Calculated at checkout</span>
+              </div>
+              <div className="summary-total">
+                <span>Current subtotal</span>
+                <span>₹{cart.total.toLocaleString("en-IN")}</span>
+              </div>
+              <p className="summary-note">Final delivery, tax, coupon and order total are validated securely at checkout.</p>
+              <Link href="/products" className="editorial-button editorial-button-light w-full">Continue shopping <ArrowLeft size={15} /></Link>
+              {availableItems.length ? (
+                <Link href="/checkout" className="editorial-button mt-2 w-full">Proceed to checkout <ArrowRight size={15} /></Link>
+              ) : null}
+            </aside>
+          </div>
+        ) : (
+          <div className="empty-state">
+            <p className="font-[var(--font-display)] text-3xl text-[var(--plum)]">Your cart is empty.</p>
+            <Link href="/products" className="editorial-button mt-6">Browse the catalogue</Link>
+          </div>
+        )}
+      </main>
+      <StorefrontFooter />
+    </>
+  );
 }
